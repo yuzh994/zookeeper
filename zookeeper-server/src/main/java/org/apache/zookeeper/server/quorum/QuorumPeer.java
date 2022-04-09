@@ -884,7 +884,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (!getView().containsKey(myid)) {
             throw new RuntimeException("My id " + myid + " not in the peer list");
          }
+        /**
+         * 加载数据
+         */
         loadDataBase();
+
+        /**
+         * netty服务端 启动监听
+         */
         startServerCnxnFactory();
         try {
             adminServer.start();
@@ -892,7 +899,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             LOG.warn("Problem starting AdminServer", e);
             System.out.println(e);
         }
+        /**
+         * 开始选举算法相关的线程
+         */
         startLeaderElection();
+        /**
+         * 核心启动方法
+         */
         super.start();
     }
 
@@ -947,7 +960,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     synchronized public void startLeaderElection() {
        try {
+           /**
+            * 当前节点是否是 LOOKING 状态
+            */
            if (getPeerState() == ServerState.LOOKING) {
+               /**
+                * 当前选票 myid
+                * zxid ，当前节点最大的事件logId
+                */
                currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
            }
        } catch(IOException e) {
@@ -959,6 +979,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        // if (!getView().containsKey(myid)) {
       //      throw new RuntimeException("My id " + myid + " not in the peer list");
         //}
+        /**
+         * 初始化的时候是3
+         */
         if (electionType == 0) {
             try {
                 udpSocket = new DatagramSocket(getQuorumAddress().getPort());
@@ -1077,6 +1100,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             le = new AuthFastLeaderElection(this, true);
             break;
         case 3:
+            /**
+             * FastLeaderElection 算法
+             */
             QuorumCnxManager qcm = createCnxnManager();
             QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
             if (oldQcm != null) {
@@ -1085,8 +1111,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
             QuorumCnxManager.Listener listener = qcm.listener;
             if(listener != null){
+                /**
+                 * 监听一个端口，接受其他 节点的选票
+                 */
                 listener.start();
+                /**
+                 * 初始化2个阻塞队列
+                 */
                 FastLeaderElection fle = new FastLeaderElection(this, qcm);
+
+                /**
+                 * 启2个线程
+                 * 一个从发送队列里拿消息
+                 * 一个从接受队列里拿消息
+                 */
                 fle.start();
                 le = fle;
             } else {
@@ -1169,6 +1207,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             /*
              * Main loop
              */
+            /**
+             * 选举核心逻辑
+             */
             while (running) {
                 switch (getPeerState()) {
                 case LOOKING:
@@ -1226,6 +1267,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                shuttingDownLE = false;
                                startLeaderElection();
                                }
+                            /**
+                             * 设置当前投票
+                             */
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);

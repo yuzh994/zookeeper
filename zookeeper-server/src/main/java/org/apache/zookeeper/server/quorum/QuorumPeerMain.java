@@ -110,21 +110,33 @@ public class QuorumPeerMain {
     {
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
+            /**
+             * 解析配置文件
+             */
             config.parse(args[0]);
         }
 
         // Start and schedule the the purge task
+        /**
+         * 清理数据文件目录
+         */
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
+            /**
+             * 集群 *主线
+             */
             runFromConfig(config);
         } else {
             LOG.warn("Either no config or no quorum defined in config, running "
                     + " in standalone mode");
             // there is only server in the quorum -- run as standalone
+            /**
+             * 单机启动
+             */
             ZooKeeperServerMain.main(args);
         }
     }
@@ -133,6 +145,9 @@ public class QuorumPeerMain {
             throws IOException, AdminServerException
     {
       try {
+          /**
+           * 日志
+           */
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {
           LOG.warn("Unable to register log4j JMX control", e);
@@ -143,6 +158,11 @@ public class QuorumPeerMain {
           ServerCnxnFactory cnxnFactory = null;
           ServerCnxnFactory secureCnxnFactory = null;
 
+          /**
+           * 初始化连接工厂
+           * 使用 netty
+           * -Dzookeeper.serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+           */
           if (config.getClientPortAddress() != null) {
               cnxnFactory = ServerCnxnFactory.createFactory();
               cnxnFactory.configure(config.getClientPortAddress(),
@@ -150,6 +170,9 @@ public class QuorumPeerMain {
                       false);
           }
 
+          /**
+           * 监听端口
+           */
           if (config.getSecureClientPortAddress() != null) {
               secureCnxnFactory = ServerCnxnFactory.createFactory();
               secureCnxnFactory.configure(config.getSecureClientPortAddress(),

@@ -45,6 +45,7 @@ public class SyncedLearnerTracker {
     }
 
     public boolean hasAllQuorums() {
+        //containsQuorum 超过半数
         for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
             if (!qvAckset.getQuorumVerifier().containsQuorum(qvAckset.getAckset()))
                 return false;

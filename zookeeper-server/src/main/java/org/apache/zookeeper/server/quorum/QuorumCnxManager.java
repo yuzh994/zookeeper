@@ -355,7 +355,9 @@ public class QuorumCnxManager {
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
     public void initiateConnection(final InetSocketAddress electionAddr, final Long sid) {
-
+        /**
+         * 和其他节点建立 socket连接
+         */
         Socket sock = null;
         try {
             LOG.debug("Opening channel to server " + sid);
@@ -912,6 +914,9 @@ public class QuorumCnxManager {
                         LOG.info("Creating TLS-only quorum server socket");
                         ss = new UnifiedServerSocket(self.getX509Util(), false);
                     } else {
+                        /**
+                         * 初始化一个 ServerSocket
+                         */
                         ss = new ServerSocket();
                     }
 
@@ -924,6 +929,9 @@ public class QuorumCnxManager {
                         // Resolve hostname for this server in case the
                         // underlying ip address has changed.
                         self.recreateSocketAddresses(self.getId());
+                        /**
+                         * 选举的端口
+                         */
                         addr = self.getElectionAddress();
                     }
                     LOG.info("{} is accepting connections now, my election bind port: {}", QuorumCnxManager.this.mySid, addr.toString());
